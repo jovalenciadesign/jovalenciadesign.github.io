@@ -182,7 +182,7 @@ a:focus-visible{outline:2px solid #E0521C;outline-offset:3px}
 <section id="featured" style="max-width: 1280px; margin: 0 auto; padding: clamp(72px, 9vw, 120px) clamp(16px, 4vw, 48px)">
 <div style="border: 1.5px solid #15171C; display: flex; flex-wrap: wrap">
 <div style="flex: 1 1 520px; min-width: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-right: 1.5px solid #15171C; background: #15171C">
-<img src="images/presidential-real.jpg" alt="The finished Presidential Award trophy: a gold globe inside a ring of wooden slats" style="grid-column: span 2; width: 100%; height: 100%; min-height: 420px; object-fit: cover; display: block">
+<video src="videos/presidential-trophy.mp4" poster="images/poster-presidential-trophy.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Video of the finished Presidential Award trophy: a gold globe inside a ring of wooden slats" style="grid-column: span 2; width: 100%; height: 100%; min-height: 420px; object-fit: cover; display: block; background: #000"></video>
 <img src="images/presidential-sheet.jpg" alt="Presidential Award trophy design sheet with renders and front, side and top views" style="grid-column: span 3; width: 100%; height: 100%; object-fit: cover; object-position: left center; display: block">
 </div>
 <div style="flex: 1 1 420px; min-width: 0; padding: clamp(24px, 4vw, 56px); display: flex; flex-direction: column; gap: 24px">
@@ -294,5 +294,10 @@ a:focus-visible{outline:2px solid #E0521C;outline-offset:3px}
 </section>
 
 </div>
+<script>
+if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  document.querySelectorAll('video[autoplay]').forEach(function (v) { v.removeAttribute('autoplay'); v.pause(); v.controls = true; });
+}
+</script>
 </body>
 </html>
