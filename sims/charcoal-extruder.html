@@ -1,0 +1,526 @@
+<!doctype html><html lang="en" data-theme="light"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Ayap Charcoal Extruder</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: full-bleed 3D stage, one control card floating top-left (bottom sheet on phones). Same system as the Conveyor Tray Dryer page. */
+:root {
+  --stage: #e7eaef;
+  --stage-floor: #d6dbe3;
+  --card: rgba(250, 251, 253, 0.92);
+  --ink: #17203a;
+  --ink-soft: #55607a;
+  --line: #c9cfdb;
+  --accent: #f08a1c;
+  --accent-ink: #1b1306;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --stage: #121624; --stage-floor: #1b2134; --card: rgba(23, 28, 44, 0.9);
+    --ink: #e9ecf4; --ink-soft: #9aa3ba; --line: #2e3650; --accent: #ff9a2e; --accent-ink: #1b1306;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --stage: #121624; --stage-floor: #1b2134; --card: rgba(23, 28, 44, 0.9);
+  --ink: #e9ecf4; --ink-soft: #9aa3ba; --line: #2e3650; --accent: #ff9a2e; --accent-ink: #1b1306;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--stage); color: var(--ink); font-family: var(--font-display); overflow: hidden; }
+#stage { position: fixed; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; }
+.card {
+  position: fixed;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  left: max(16px, env(safe-area-inset-left, 0px));
+  width: 304px; max-width: calc(100% - 32px);
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+  padding: 16px; display: grid; gap: 14px;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.head { display: grid; gap: 4px; }
+h1 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.01em; text-wrap: balance; }
+.sub { margin: 0; font-size: 12.5px; color: var(--ink-soft); font-weight: 500; }
+.readouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ro { display: grid; gap: 2px; padding: 8px; border-radius: 6px; background: color-mix(in srgb, var(--line) 35%, transparent); }
+.ro .k { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-soft); font-weight: 700; }
+.ro .v { font-family: var(--font-mono); font-size: 17px; font-variant-numeric: tabular-nums; font-weight: 500; }
+.ro .u { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-soft); }
+.row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+button {
+  font: 700 13px var(--font-display); border-radius: 6px; border: 1px solid var(--line);
+  background: transparent; color: var(--ink); padding: 8px 12px; cursor: pointer;
+}
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); min-width: 84px; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; padding: 7px 8px; font-size: 12.5px; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--stage); }
+.field { display: grid; gap: 6px; }
+.field > .lbl { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--ink-soft); }
+.field output { font-family: var(--font-mono); color: var(--ink); font-weight: 500; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.toggles { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; font-weight: 500; }
+.toggles label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; }
+.hint { font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); margin: 0; }
+@media (max-width: 560px) {
+  .card {
+    top: auto; bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px));
+    width: auto; max-width: none; padding: 12px; gap: 10px;
+  }
+  .sub, .hint, .toggles { display: none; }
+  .ro .v { font-size: 15px; }
+}
+#err { position: fixed; inset: auto 16px 16px 16px; font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); }
+</style>
+
+<canvas id="stage" aria-label="3D animation of the charcoal oven, auger extruder and servo cutter"></canvas>
+
+<section class="card" aria-label="Animation controls">
+  <div class="head">
+    <h1>Ayap Charcoal Extruder</h1>
+    <p class="sub">Auger feed · Ø5.6 mm log · SG90 cutter arm</p>
+  </div>
+  <div class="readouts">
+    <div class="ro"><span class="k">Auger</span><span class="v" id="roRpm">30</span><span class="u">rpm</span></div>
+    <div class="ro"><span class="k">Cutter</span><span class="v" id="roCuts">30</span><span class="u">cuts/min</span></div>
+    <div class="ro"><span class="k">Pieces</span><span class="v" id="roPieces">0</span><span class="u">cut so far</span></div>
+  </div>
+  <div class="seg" role="group" aria-label="Cutter motion">
+    <button id="modeSpin" type="button" aria-pressed="true">Spin</button>
+    <button id="modeSweep" type="button" aria-pressed="false">Servo sweep</button>
+  </div>
+  <div class="field">
+    <div class="lbl"><label for="speed">Extrusion speed</label><output id="speedOut" for="speed">6 mm/s</output></div>
+    <input id="speed" type="range" min="2" max="15" step="0.5" value="6">
+  </div>
+  <div class="field">
+    <div class="lbl"><label for="len">Piece length</label><output id="lenOut" for="len">12 mm</output></div>
+    <input id="len" type="range" min="6" max="25" step="1" value="12">
+  </div>
+  <div class="row">
+    <button id="play" class="primary" type="button" aria-pressed="true">Pause</button>
+    <button id="viewAll" type="button">Whole machine</button>
+    <button id="viewCut" type="button">Cutter close-up</button>
+  </div>
+  <div class="toggles">
+    <label for="xray"><input id="xray" type="checkbox"> See inside box</label>
+    <label for="smoke"><input id="smoke" type="checkbox" checked> Smoke</label>
+  </div>
+  <p class="hint">Drag to orbit · scroll or pinch to zoom</p>
+</section>
+<div id="err" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  if (!window.THREE) {
+    const e = document.getElementById('err');
+    e.textContent = 'The 3D library did not load. Check your connection and reload the page.';
+    e.hidden = false;
+    return;
+  }
+  const V3 = THREE.Vector3;
+  const canvas = document.getElementById('stage');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(36, 1, 1, 8000);
+  const controls = new THREE.OrbitControls(camera, canvas);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.minDistance = 30;
+  controls.maxDistance = 2600;
+  controls.maxPolarAngle = Math.PI * 0.495;
+
+  // Embedded in the portfolio page: don't hijack page scrolling until the visitor clicks the model,
+  // and stop rendering while the frame is scrolled out of view.
+  const embedded = window.self !== window.top;
+  let visible = true;
+  if (embedded) {
+    controls.enableZoom = false;
+    canvas.addEventListener('pointerdown', () => { controls.enableZoom = true; });
+    canvas.addEventListener('pointerleave', () => { controls.enableZoom = false; });
+    const hint = document.querySelector('.hint');
+    if (hint) hint.textContent = 'Drag to orbit · click, then scroll to zoom';
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(es => { visible = es[0].isIntersecting; if (visible) last = performance.now(); })
+        .observe(canvas);
+    }
+  }
+
+  // ---- theme-aware stage ----
+  const floorMat = new THREE.MeshStandardMaterial({ color: 0xd6dbe3, roughness: 1 });
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#e7eaef';
+  function applyTheme() { scene.background = new THREE.Color(css('--stage')); floorMat.color.set(css('--stage-floor')); }
+  applyTheme();
+  try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme); } catch (e) {}
+  new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a93a8, 0.78));
+  const key = new THREE.DirectionalLight(0xffffff, 0.72); key.position.set(500, 800, 600); scene.add(key);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.3); fill.position.set(-600, 300, -400); scene.add(fill);
+
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(1000, 64), floorMat);
+  floor.rotation.x = -Math.PI / 2; floor.position.y = -0.5; scene.add(floor);
+
+  // ---- model space = Onshape assembly world, mm, Z up. root maps it to three.js (Y up) and centres it. ----
+  const root = new THREE.Group();
+  root.rotation.x = -Math.PI / 2;
+  root.position.set(-850, -764, -1230);
+  scene.add(root);
+
+  const M = (c, extra) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.6, metalness: 0.05 }, extra || {}));
+  const mat = {
+    oven: M(0xc4e2f3, { metalness: 0.35, roughness: 0.4 }),
+    stand: M(0x9dcfed, { metalness: 0.3, roughness: 0.45 }),
+    door: M(0xeaeaea, { metalness: 0.3, roughness: 0.4 }),
+    grey: M(0x7f7f7f), greyD: M(0x5f6066), steel: M(0xa5a5a5, { metalness: 0.5, roughness: 0.35 }),
+    tube: M(0xeaeaea, { transparent: true, opacity: 0.32, side: THREE.DoubleSide, depthWrite: false, metalness: 0.4, roughness: 0.3 }),
+    ring: M(0xd8d8d8, { metalness: 0.5, roughness: 0.35 }),
+    auger: M(0xa5a5a5, { metalness: 0.6, roughness: 0.3, side: THREE.DoubleSide }),
+    plate: M(0x3b61b4), servo: M(0x2640cc), shaft: M(0xf2f2f2), cutter: M(0xf28c19),
+    coal: M(0x1a1a1a, { roughness: 0.85 }), paste: M(0x3a2a1e, { roughness: 0.9 }), bore: M(0x0b0b0d),
+    chips: M(0xfab601, { roughness: 0.95 }), glow: new THREE.MeshBasicMaterial({ color: 0xff7a1a }),
+    wireB: M(0x663319), wireR: M(0xd91919), wireO: M(0xff8c00)
+  };
+  const relayMat = M(0x8a8a8a, { transparent: true, opacity: 1 });
+
+  function box(x0, x1, y0, y1, z0, z1, m, parent) {
+    const g = new THREE.BoxGeometry(Math.abs(x1 - x0), Math.abs(y1 - y0), Math.abs(z1 - z0));
+    const mesh = new THREE.Mesh(g, m);
+    mesh.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+    (parent || root).add(mesh);
+    return mesh;
+  }
+  function cyl(axis, cx, cy, cz, r, len, m, parent, o) {
+    o = o || {};
+    const g = new THREE.CylinderGeometry(o.rTop != null ? o.rTop : r, r, len, o.seg || 36, 1, !!o.open);
+    if (axis === 'z') g.rotateX(Math.PI / 2);
+    if (axis === 'x') g.rotateZ(-Math.PI / 2);
+    const mesh = new THREE.Mesh(g, m);
+    mesh.position.set(cx, cy, cz);
+    (parent || root).add(mesh);
+    return mesh;
+  }
+
+  // ---- oven drum, bands, door, chimney ----
+  const OX = 717.5, OZ = 892.5;
+  cyl('y', OX, -1362, OZ, 53, 150, mat.oven);
+  [-1437, -1387, -1337, -1290].forEach(y => cyl('y', OX, y, OZ, 54.5, 3, mat.ring));
+  cyl('y', 717, -1441, 888, 48, 8, mat.door);
+  cyl('y', 717, -1446, 888, 10, 2, mat.greyD);
+  const doorWindow = cyl('y', 697, -1445.5, 905, 7, 1.5, mat.glow);
+  box(735, 745, -1450, -1446, 885, 891, mat.greyD);
+  cyl('z', 717.5, -1412.5, 984, 15, 88, mat.oven, root, { open: true });
+  cyl('z', 717.5, -1412.5, 1026, 15.5, 4, mat.ring);
+  cyl('z', 717.5, -1412.5, 944, 20, 6, mat.ring);
+  const fire = new THREE.PointLight(0xff7a1a, 0.8, 260);
+  fire.position.set(705, -1470, 900); root.add(fire);
+
+  // hopper (light blue, like the oven) with woodchips
+  const hop = new THREE.CylinderGeometry(1, 0.45, 1, 4, 1, true);
+  hop.rotateY(Math.PI / 4); hop.rotateX(Math.PI / 2);
+  const hopper = new THREE.Mesh(hop, M(0xc4e2f3, { metalness: 0.35, roughness: 0.4, side: THREE.DoubleSide }));
+  hopper.scale.set(56.6, 42.4, 74); hopper.position.set(717, -1317, 971); root.add(hopper);
+  box(683, 751, -1342, -1292, 988, 1002, mat.chips);
+  // funnel under the drum (light blue)
+  const fun = new THREE.CylinderGeometry(1, 0.3, 1, 4, 1, true);
+  fun.rotateY(Math.PI / 4); fun.rotateX(Math.PI / 2);
+  const funnel = new THREE.Mesh(fun, M(0xc4e2f3, { metalness: 0.35, roughness: 0.4, side: THREE.DoubleSide }));
+  funnel.scale.set(34.6, 24, 74); funnel.rotation.x = Math.PI; funnel.position.set(717.5, -1410, 807); root.add(funnel);
+
+  // oven stand: square-tube frame
+  [[658, -1434], [778, -1434], [658, -1290], [778, -1290]].forEach(([x, y]) => box(x - 3, x + 3, y - 3, y + 3, 765, 850, mat.stand));
+  [775, 845].forEach(z => {
+    box(655, 781, -1437, -1431, z, z + 5, mat.stand); box(655, 781, -1293, -1287, z, z + 5, mat.stand);
+    box(655, 661, -1437, -1287, z, z + 5, mat.stand); box(775, 781, -1437, -1287, z, z + 5, mat.stand);
+  });
+  box(690, 745, -1437, -1287, 850, 860, mat.stand);
+
+  // ---- auger tube (see-through), flange, auger ----
+  cyl('y', 721, -1219, 883, 22, 130, mat.tube, root, { open: true, seg: 48 });
+  [-1250, -1210, -1170].forEach(y => cyl('y', 721, y, 883, 22.6, 3, mat.ring));
+  cyl('y', 721, -1283, 883, 25, 8, mat.ring);
+  const auger = new THREE.Group(); auger.position.set(717, -1219, 884); root.add(auger);
+  cyl('y', 0, 0, 0, 5, 132, mat.steel, auger);
+  (function flight() {
+    const N = 400, L = 128, PITCH = 26, rin = 5, rout = 14.5, pos = [], idx = [];
+    for (let i = 0; i <= N; i++) {
+      const t = i / N, y = -L / 2 + L * t, a = 2 * Math.PI * (L / PITCH) * t;
+      pos.push(rin * Math.cos(a), y, rin * Math.sin(a), rout * Math.cos(a), y, rout * Math.sin(a));
+      if (i < N) { const k = i * 2; idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setIndex(idx); g.computeVertexNormals();
+    auger.add(new THREE.Mesh(g, mat.auger));
+  })();
+  // charcoal paste riding the flights
+  const pellets = [];
+  const pelletGeo = new THREE.IcosahedronGeometry(2.6, 0);
+  for (let i = 0; i < 46; i++) {
+    const p = new THREE.Mesh(pelletGeo, mat.paste);
+    const a = Math.random() * Math.PI * 2, r = 7 + Math.random() * 6;
+    p.position.set(r * Math.cos(a), -64 + Math.random() * 128, r * Math.sin(a));
+    auger.add(p); pellets.push(p);
+  }
+
+  // ---- extruder box (tube holder) + relay box with two trays and the sloped chute ----
+  box(658, 784, -1156, -1006, 832, 932, mat.grey);
+  const relayParts = [];
+  const R = (...a) => relayParts.push(box(...a, relayMat));
+  R(784, 984, -1156, -1006, 832, 915);
+  R(784, 794, -1156, -1006, 915, 932); R(864, 884, -1156, -1006, 915, 932); R(954, 984, -1156, -1006, 915, 932);
+  [[794, 864], [884, 954]].forEach(([a, b]) => { R(a, b, -1156, -1146, 915, 932); R(a, b, -1016, -1006, 915, 932); });
+  const SLOPE = Math.atan2(11, 60);
+  const chuteZ = x => 866 - (x - 984) * 11 / 60;
+  const chute = new THREE.Group(); chute.position.set(1014, -1081.5, chuteZ(1014) - 1.5); chute.rotation.y = SLOPE; root.add(chute);
+  box(-30.5, 30.5, -33.5, 33.5, -1.5, 1.5, relayMat, chute);
+  box(-30.5, 30.5, -33.5, -30.5, -1.5, 9, relayMat, chute);
+  box(-30.5, 30.5, 30.5, 33.5, -1.5, 9, relayMat, chute);
+  relayParts.push(...chute.children);
+  // stands under both boxes
+  [654, 810, 822, 978].forEach(x => [-1153, -1010].forEach(y => cyl('z', x, y, 798, 6, 68, mat.steel)));
+  box(648, 984, -1159, -1004, 826, 832, mat.steel);
+
+  // coal pile at the end of the chute
+  const pile = new THREE.InstancedMesh(new THREE.CylinderGeometry(6, 6, 20, 18).rotateZ(-Math.PI / 2), mat.coal, 50);
+  { let n = 0; const m4 = new THREE.Matrix4();
+    for (let r = 0; r < 5; r++) for (let c = 0; c < 10; c++) { m4.makeTranslation(1065, -1121 + c * 12.1, 772 + r * 12); pile.setMatrixAt(n++, m4); } }
+  root.add(pile);
+
+  // ---- extruder plate, servo and cutter: built in the plate's own frame (same numbers as the FeatureScript) ----
+  const plate = new THREE.Group(); plate.matrixAutoUpdate = false;
+  plate.matrix.makeBasis(new V3(0, 1, 0), new V3(0, 0, 1), new V3(1, 0, 0)).setPosition(985, -1081, 882);
+  root.add(plate);
+  const PLATE_TO_WORLD = p => new V3(985 + p.z, -1081 + p.x, 882 + p.y);
+  box(-13, 13, -13, 13, 0, 2, mat.plate, plate);
+  cyl('z', 0, -7.2, 9.5, 4, 15, mat.plate, plate);
+  cyl('z', 0, -7.2, 17.02, 3.05, 0.1, mat.bore, plate);
+  // servo case, tabs, boss (convex outline of the boss + side lobe), shaft, wires
+  box(-5.9, 16.6, -1.2, 11, -22.7, 0, mat.servo, plate);
+  box(-10.75, 21.45, -1.2, 11, -6.8, -4.3, mat.servo, plate);
+  {
+    const Rb = 5.9, rl = 2.8, d = 7.5, al = Math.acos((Rb - rl) / d), s = new THREE.Shape();
+    s.moveTo(Rb * Math.cos(al), 4.9 + Rb * Math.sin(al));
+    s.absarc(0, 4.9, Rb, al, 2 * Math.PI - al, false);
+    s.lineTo(d + rl * Math.cos(-al), 4.9 + rl * Math.sin(-al));
+    s.absarc(d, 4.9, rl, -al, al, false);
+    const g = new THREE.ExtrudeGeometry(s, { depth: 4.5, bevelEnabled: false, curveSegments: 24 });
+    const m = new THREE.Mesh(g, mat.servo); m.position.z = -0.5; plate.add(m);
+  }
+  cyl('z', 0, 4.9, 5.6, 2.4, 3.2, mat.shaft, plate);
+  [[3.9, mat.wireB], [4.9, mat.wireR], [5.9, mat.wireO]].forEach(([y, m]) => cyl('x', -13.4, y, -19.7, 0.5, 15, m, plate));
+  // cutter arm on the servo shaft
+  const cutter = new THREE.Group(); cutter.position.set(0, 4.9, 0); plate.add(cutter);
+  cyl('z', 0, 0, 14.3, 4.25, 20, mat.cutter, cutter);
+  cyl('z', 0, 0, 24.35, 1.2, 0.1, mat.bore, cutter);
+  box(0, 21, -3, 3, 22.3, 24.3, mat.cutter, cutter);
+  cyl('z', 21, 0, 23.3, 3, 2, mat.cutter, cutter);
+  // the extruded charcoal log (grows out of the tube)
+  const logGeo = new THREE.CylinderGeometry(2.8, 2.8, 1, 24); logGeo.rotateX(Math.PI / 2); logGeo.translate(0, 0, 0.5);
+  const log = new THREE.Mesh(logGeo, mat.coal); log.position.set(0, -7.2, 2.5); plate.add(log);
+
+  // ---- state & controls ----
+  const BLADE = 22.3, TUBE_ANGLE = -Math.PI / 2, PITCH_PER_TURN = 12;
+  const st = {
+    playing: true, mode: 'spin', v: 6, L: 12, tip: BLADE, theta: 0, phase: 0,
+    sweepT: -1, auger: 0, pieces: 0, smoke: true
+  };
+  const reduced = (() => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } })();
+  if (reduced) st.playing = false;
+
+  const $ = id => document.getElementById(id);
+  function readouts() {
+    $('roRpm').textContent = Math.round(60 * st.v / PITCH_PER_TURN);
+    $('roCuts').textContent = Math.round(60 * st.v / st.L);
+    $('roPieces').textContent = st.pieces;
+    $('speedOut').textContent = st.v + ' mm/s';
+    $('lenOut').textContent = st.L + ' mm';
+  }
+  $('speed').addEventListener('input', e => { st.v = +e.target.value; readouts(); });
+  $('len').addEventListener('input', e => { st.L = +e.target.value; readouts(); });
+  const playBtn = $('play');
+  function syncPlay() { playBtn.textContent = st.playing ? 'Pause' : 'Play'; playBtn.setAttribute('aria-pressed', String(st.playing)); }
+  playBtn.addEventListener('click', () => { st.playing = !st.playing; syncPlay(); });
+  function setMode(m) {
+    st.mode = m; st.sweepT = -1;
+    if (m === 'sweep') st.theta = 0; else st.phase = 0;
+    $('modeSpin').setAttribute('aria-pressed', String(m === 'spin'));
+    $('modeSweep').setAttribute('aria-pressed', String(m === 'sweep'));
+  }
+  $('modeSpin').addEventListener('click', () => setMode('spin'));
+  $('modeSweep').addEventListener('click', () => setMode('sweep'));
+  $('xray').addEventListener('change', e => {
+    relayMat.opacity = e.target.checked ? 0.18 : 1; relayMat.depthWrite = !e.target.checked; relayMat.needsUpdate = true;
+  });
+  $('smoke').addEventListener('change', e => { st.smoke = e.target.checked; });
+
+  // camera views (three.js coords)
+  const VIEWS = {
+    all: { pos: new V3(560, 430, 660), target: new V3(10, 150, 0) },
+    cut: { pos: new V3(232, 160, -66), target: new V3(150, 113, -146) }
+  };
+  let fly = null;
+  function goTo(v, instant) {
+    if (instant) { camera.position.copy(v.pos); controls.target.copy(v.target); controls.update(); return; }
+    fly = { t: 0, p0: camera.position.clone(), t0: controls.target.clone(), v };
+  }
+  $('viewAll').addEventListener('click', () => goTo(VIEWS.all));
+  $('viewCut').addEventListener('click', () => goTo(VIEWS.cut));
+  goTo(VIEWS.all, true);
+
+  // ---- cut pieces ----
+  const pieces = [];
+  function spawnPiece(len) {
+    const g = new THREE.CylinderGeometry(2.8, 2.8, len, 20); g.rotateZ(-Math.PI / 2);
+    const m = new THREE.Mesh(g, mat.coal.clone()); m.material.transparent = true;
+    const c = PLATE_TO_WORLD(new V3(0, -7.2, BLADE + len / 2));
+    m.position.copy(c); root.add(m);
+    pieces.push({ m, len, v: new V3(6, -42, 4), spin: 0, onChute: false, landed: 0, age: 0 });
+    st.pieces++; $('roPieces').textContent = st.pieces;
+  }
+  function stepPieces(dt) {
+    const G = 900;
+    for (let i = pieces.length - 1; i >= 0; i--) {
+      const p = pieces[i], q = p.m.position;
+      p.age += dt;
+      if (p.landed) {
+        p.landed += dt;
+        p.m.material.opacity = Math.max(0, 1 - (p.landed - 1.5) / 1.2);
+        if (p.landed > 2.8) { root.remove(p.m); p.m.geometry.dispose(); p.m.material.dispose(); pieces.splice(i, 1); }
+        continue;
+      }
+      p.v.z -= G * dt;
+      q.addScaledVector(p.v, dt);
+      const inChute = q.x - p.len / 2 < 1044 && q.y > -1115 && q.y < -1048;
+      if (inChute) {
+        const fz = chuteZ(Math.min(1044, Math.max(984, q.x))) + 2.8;
+        if (q.z < fz) {
+          q.z = fz; p.v.z = 0; p.onChute = true;
+          p.v.x += 160 * Math.sin(SLOPE) * dt * 6;
+          p.v.y -= p.v.y * 5 * dt;
+          p.m.rotation.y = SLOPE;
+        }
+        if (q.y < -1112 + 2.8) { q.y = -1112 + 2.8; p.v.y = Math.abs(p.v.y) * 0.3; }
+        if (q.y > -1051 - 2.8) { q.y = -1051 - 2.8; p.v.y = -Math.abs(p.v.y) * 0.3; }
+      } else if (p.onChute) {
+        p.m.rotation.y += 3 * dt;
+      }
+      const ground = (q.x > 1050 && q.x < 1080 && q.y > -1128 && q.y < -1005) ? 830 : 766.8;
+      if (q.z < ground) { q.z = ground; p.landed = 0.001; }
+      if (p.age > 12) p.landed = 1.5;
+    }
+  }
+
+  // ---- smoke ----
+  const smokeTex = (() => {
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 2, 32, 32, 31);
+    gr.addColorStop(0, 'rgba(255,255,255,0.9)'); gr.addColorStop(0.5, 'rgba(255,255,255,0.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+    return new THREE.CanvasTexture(c);
+  })();
+  const puffs = [];
+  let smokeAcc = 0;
+  function stepSmoke(dt) {
+    if (st.smoke) {
+      smokeAcc += dt * 6;
+      while (smokeAcc > 1) {
+        smokeAcc--;
+        const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: smokeTex, color: 0x8d8f96, transparent: true, depthWrite: false, opacity: 0 }));
+        s.position.set(717.5 + (Math.random() - 0.5) * 10, -1412.5 + (Math.random() - 0.5) * 10, 1030);
+        root.add(s);
+        puffs.push({ s, age: 0, life: 4.5 + Math.random() * 1.5, dx: 8 + Math.random() * 10, dy: (Math.random() - 0.5) * 8, rot: (Math.random() - 0.5) });
+      }
+    }
+    for (let i = puffs.length - 1; i >= 0; i--) {
+      const p = puffs[i]; p.age += dt;
+      const t = p.age / p.life;
+      if (t >= 1) { root.remove(p.s); p.s.material.dispose(); puffs.splice(i, 1); continue; }
+      p.s.position.z += (55 - 20 * t) * dt;
+      p.s.position.x += p.dx * dt * t * 2;
+      p.s.position.y += p.dy * dt;
+      p.s.material.rotation += p.rot * dt;
+      const size = 22 + 90 * t;
+      p.s.scale.set(size, size, 1);
+      p.s.material.opacity = Math.min(1, t * 6) * (1 - t) * 0.75;
+    }
+  }
+
+  // ---- main loop ----
+  const wrap = a => { a = (a + Math.PI) % (2 * Math.PI); if (a < 0) a += 2 * Math.PI; return a - Math.PI; };
+  function step(dt) {
+    // auger: 12 mm of log per auger turn
+    st.auger += 2 * Math.PI * (st.v / PITCH_PER_TURN) * dt;
+    auger.rotation.y = -st.auger;
+    pellets.forEach(p => { p.position.y += st.v * 0.9 * dt * (26 / PITCH_PER_TURN); if (p.position.y > 64) p.position.y -= 128; });
+    // extrusion
+    st.tip += st.v * dt;
+    // cutter
+    const prev = st.theta;
+    if (st.mode === 'spin') {
+      st.phase += 2 * Math.PI * (st.v / st.L) * dt;
+      st.theta = TUBE_ANGLE - st.phase;
+    } else {
+      const DOWN = 0.3, UP = 0.4, END = TUBE_ANGLE - 0.9;
+      if (st.sweepT < 0 && st.tip - BLADE >= st.L) st.sweepT = 0;
+      if (st.sweepT >= 0) {
+        st.sweepT += dt;
+        if (st.sweepT < DOWN) st.theta = END * (st.sweepT / DOWN);
+        else if (st.sweepT < DOWN + UP) st.theta = END * (1 - (st.sweepT - DOWN) / UP);
+        else { st.theta = 0; st.sweepT = -1; }
+      }
+    }
+    const d0 = wrap(prev - TUBE_ANGLE), d1 = wrap(st.theta - TUBE_ANGLE);
+    if (Math.sign(d0) !== Math.sign(d1) && Math.abs(d0 - d1) < Math.PI && st.tip - BLADE > 0.5) {
+      spawnPiece(st.tip - BLADE);
+      st.tip = BLADE;
+    }
+    st.tip = Math.min(st.tip, BLADE + 40);
+    cutter.rotation.z = st.theta;
+    log.scale.z = Math.max(0.01, st.tip - 2.5);
+  }
+
+  function resize() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize); resize();
+
+  let last = performance.now(), clock = 0;
+  function frame(now) {
+    if (!visible) { requestAnimationFrame(frame); return; }
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (st.playing) { step(dt); stepPieces(dt); clock += dt; }
+    stepSmoke(st.playing ? dt : 0);
+    const f = 0.7 + 0.25 * Math.sin(clock * 13) + 0.12 * Math.sin(clock * 31);
+    fire.intensity = f; mat.glow.color.setHSL(0.07, 1, 0.45 + 0.08 * f);
+    if (fly) {
+      fly.t = Math.min(1, fly.t + dt / 0.9);
+      const e = fly.t < 0.5 ? 2 * fly.t * fly.t : 1 - Math.pow(-2 * fly.t + 2, 2) / 2;
+      camera.position.lerpVectors(fly.p0, fly.v.pos, e);
+      controls.target.lerpVectors(fly.t0, fly.v.target, e);
+      if (fly.t >= 1) fly = null;
+    }
+    controls.update();
+    renderer.render(scene, camera);
+    requestAnimationFrame(frame);
+  }
+  readouts(); syncPlay();
+  // start with a log already part-way out so the first frame shows the cutter's job
+  st.tip = BLADE + st.L * 0.6; st.phase = 2 * Math.PI * 0.6; st.theta = TUBE_ANGLE - st.phase;
+  step(0); cutter.rotation.z = st.theta;
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>
